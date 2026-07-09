@@ -12,10 +12,11 @@ import TripsView from "./components/TripsView";
 import { useTrips } from "@/hooks/useTrips";
 import { useEffect, useMemo, useRef, useState } from "react";
 import MapWrapper from "./components/MapWrapper";
-import { useTraccar } from "@/hooks/useTraccar";
 import { useStopEngine } from "../hooks/useStopEngine";
 import { useMeetingEngine } from "../hooks/useMeetingEngine";
 import { useAlertEngine } from "../hooks/useAlertEngine";
+import { useTrackingProvider } from "../hooks/useTrackingProvider";
+import DeviceCenter from "./DeviceCenter/DeviceCenter";
 
 type Source = "Demo" | "Traccar";
 
@@ -180,14 +181,10 @@ export default function Dashboard() {
     },
   ]);
 
-const { traccarTrackers } = useTraccar();
-
-const typedTraccarTrackers = traccarTrackers as Tracker[];
-
-const trackers = useMemo(
-  () => [...demoTrackers, ...typedTraccarTrackers],
-  [demoTrackers, typedTraccarTrackers]
-);
+const {
+    trackers,
+    traccarTrackers,
+} = useTrackingProvider(demoTrackers);
 
 const [trackerSourceFilter, setTrackerSourceFilter] = useState<
   "All" | "Demo" | "Traccar"
@@ -225,7 +222,7 @@ const [hotspots, setHotspots] = useState<Hotspot[]>([]);
 const [selectedTrackerName, setSelectedTrackerName] = useState("Grace");
 
 const [activeTab, setActiveTab] = useState<
-  "live" | "analyse" | "timeline" | "trips"
+"live" | "analyse" | "timeline" | "trips" | "devices"
 >("live");
 
 const [selectedHotspot, setSelectedHotspot] = useState<string | null>(null);
@@ -733,7 +730,7 @@ detectConvoy({
 
 const getTimelineTrackers = () => {
   const trackerNames = trackers
-    .filter((tracker): tracker is Tracker => Boolean(tracker))
+.filter(Boolean)
     .map((tracker) => tracker.name);
 
   return ["All", ...Array.from(new Set(trackerNames))];
@@ -742,7 +739,7 @@ const getTimelineTrackers = () => {
 const visibleTrackers =
   trackerSourceFilter === "All"
     ? trackers
-    : trackers.filter((tracker) => tracker.source === trackerSourceFilter);
+:trackers.filter((tracker: any) => tracker.source === trackerSourceFilter)
 
   const filteredTimeline = () => {
     let timeline = generateTimeline().reverse();
@@ -814,6 +811,16 @@ const visibleTrackers =
 >
   🚗 Trips
 </button>
+
+<button
+  onClick={() => setActiveTab("devices")}
+  className={`w-full text-left px-4 py-3 rounded-lg ${
+    activeTab === "devices" ? "bg-slate-700 text-white" : "text-slate-300"
+  }`}
+>
+  📡 Device Center
+</button>
+
           <div className="text-slate-300 px-4 py-3">🚗 Trackers</div>
           <div className="text-slate-300 px-4 py-3">📜 Historiek</div>
           <div className="text-slate-300 px-4 py-3">🛑 Stops</div>
@@ -1265,6 +1272,30 @@ const visibleTrackers =
     formatDuration={formatDuration}
     formatDistance={formatDistance}
   />
+)}
+{activeTab === "devices" && (
+<DeviceCenter
+  devices={trackers.map((tracker: any) => ({
+    id: String(tracker.deviceId ?? tracker.id ?? tracker.name),
+    name: tracker.name,
+    source: tracker.source === "Demo" ? "demo" : "traccar",
+    status:
+      tracker.status === "Online"
+        ? "online"
+        : tracker.status === "Stilstaand"
+        ? "stopped"
+        : tracker.status === "Stop"
+        ? "stopped"
+        : "offline",
+    latitude: tracker.latitude ?? tracker.position?.[0] ?? 0,
+    longitude: tracker.longitude ?? tracker.position?.[1] ?? 0,
+    speed: tracker.speed ?? 0,
+    battery: tracker.battery,
+    lastUpdate: tracker.lastUpdate
+      ? new Date(tracker.lastUpdate)
+      : new Date(),
+  }))}
+/>
 )}
       </section>
     </main>
