@@ -5,6 +5,7 @@ type Props = {
   selectedTracker: any;
   stops: any[];
   meetings: any[];
+  onOpenDeviceCenter: (tracker: any) => void;
 };
 
 export default function MapPanel({
@@ -12,6 +13,7 @@ export default function MapPanel({
   selectedTracker,
   stops,
   meetings,
+  onOpenDeviceCenter,
 }: Props) {
   return (
     <div className="rounded-lg overflow-hidden">
@@ -20,6 +22,7 @@ export default function MapPanel({
         selectedTracker={selectedTracker}
         stops={stops}
         meetings={meetings}
+        onOpenDeviceCenter={onOpenDeviceCenter}
       />
     </div>
   );

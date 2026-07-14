@@ -6,15 +6,26 @@ import DeviceDetails from "./DeviceDetails";
 
 type DeviceCenterProps = {
   devices: Device[];
+  selectedDeviceId: string | null;
+  onSelectDevice: (deviceId: string | null) => void;
+  onOpenOnMap: (device: Device) => void;
 };
 
-export default function DeviceCenter({ devices }: DeviceCenterProps) {
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-const [searchQuery, setSearchQuery] = useState("");
+export default function DeviceCenter({
+  devices,
+  selectedDeviceId,
+  onSelectDevice,
+  onOpenOnMap,
+}: DeviceCenterProps) {
+
+  const [searchQuery, setSearchQuery] = useState("");
 
 const filteredDevices = devices.filter((device) =>
   device.name.toLowerCase().includes(searchQuery.toLowerCase())
 );
+const selectedDevice =
+  devices.find((device) => device.id === selectedDeviceId) ?? null;
+
 const onlineCount = devices.filter((d) => d.status === "online").length;
 const movingCount = devices.filter((d) => d.status === "moving").length;
 const stoppedCount = devices.filter((d) => d.status === "stopped").length;
@@ -61,12 +72,15 @@ const offlineCount = devices.filter((d) => d.status === "offline").length;
 
 <div className="grid grid-cols-1 xl:grid-cols-[250px_1fr] gap-6 items-start">
 <DeviceList
-    devices={filteredDevices}
-    selectedDeviceId={selectedDevice?.id}
-    onSelect={setSelectedDevice}
+  devices={filteredDevices}
+  selectedDeviceId={selectedDeviceId ?? undefined}
+  onSelect={(device) => onSelectDevice(device.id)}
 />
         {selectedDevice ? (
-          <DeviceDetails device={selectedDevice} />
+<DeviceDetails
+  device={selectedDevice}
+  onOpenOnMap={onOpenOnMap}
+/>
         ) : (
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 text-center text-slate-400">
             <div className="text-4xl mb-3">📡</div>

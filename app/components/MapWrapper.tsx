@@ -9,8 +9,8 @@ type Tracker = {
   speed: number;
   battery: number;
   status: string;
-  stationarySince: number | null;
-  stopDetected: boolean;
+stationarySince?: number | null;
+  stopDetected: boolean;  
 };
 
 type Stop = {
@@ -40,17 +40,21 @@ export default function MapWrapper({
   selectedTracker,
   stops = [],
   meetings = [],
+  onOpenDeviceCenter,
 }: {
   trackers: Tracker[];
   selectedTracker: Tracker;
   stops?: Stop[];
   meetings?: Meeting[];
-}) {  return (
+  onOpenDeviceCenter: (tracker: Tracker) => void;
+}) {
+  return (
     <Map
       trackers={trackers}
       selectedTracker={selectedTracker}
       stops={stops}
       meetings={meetings}
+      onOpenDeviceCenter={onOpenDeviceCenter}
     />
   );
 }

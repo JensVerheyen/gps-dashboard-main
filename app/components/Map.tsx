@@ -7,9 +7,11 @@ import {
   Popup,
   Polyline,
   Circle,
+   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useEffect } from "react";
 
 type Tracker = {
   name: string;
@@ -19,6 +21,7 @@ type Tracker = {
   battery: number;
   status: string;
   stopDetected: boolean;
+  stationarySince?: number | null;
 };
 type Stop = {
   startTime: string;
@@ -37,35 +40,57 @@ type Meeting = {
   duration: number;
   status: "Active" | "Ended";
 };
+const vehicleIconCache = new globalThis.Map<string, L.DivIcon>();
 
-const createVehicleIcon = (status: string) => {
+const createVehicleIcon = (status: string, isSelected = false) => {
+  const cacheKey = `${status}-${isSelected}`;
+
+  const cachedIcon = vehicleIconCache.get(cacheKey);
+
+  if (cachedIcon) {
+    return cachedIcon;
+  }
+
   let color = "#22c55e";
-
+  
   if (status === "Stilstaand") color = "#f97316";
   if (status === "Offline") color = "#ef4444";
 
-  return L.divIcon({
-    className: "",
-    html: `
-      <div style="
-        width: 34px;
-        height: 34px;
-        border-radius: 9999px;
-        background: ${color};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 3px solid white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.35);
-        font-size: 18px;
-      ">
-        🚗
-      </div>
-    `,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-    popupAnchor: [0, -18],
-  });
+const icon = L.divIcon({
+  className: "",
+  html: `
+    <div style="
+      width: 34px;
+      height: 34px;
+      border-radius: 9999px;
+      background: ${color};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid white;
+      box-shadow: ${
+        isSelected
+          ? "0 0 0 8px rgba(59,130,246,0.25), 0 0 22px rgba(59,130,246,0.9)"
+          : "0 4px 10px rgba(0,0,0,0.35)"
+      };
+      animation: ${
+        isSelected
+          ? "argus-marker-pulse 1.2s ease-out 2"
+          : "none"
+      };
+      font-size: 18px;
+    ">
+      🚗
+    </div>
+  `,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -18],
+});
+
+vehicleIconCache.set(cacheKey, icon);
+
+return icon;
 };
 
 const createStopIcon = () => {
@@ -116,26 +141,72 @@ const createMeetingIcon = () => {
     popupAnchor: [0, -20],
   });
 };
+const markerPulseStyles = `
+  @keyframes argus-marker-pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.18);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+`;
+function MapFocusController({
+  position,
+}: {
+  position: [number, number];
+}) {
+  const map = useMap();
 
+  useEffect(() => {
+    map.flyTo(position, 12, {
+      animate: true,
+      duration: 0.8,
+    });
+  }, [map, position]);
+
+  return null;
+}
+function formatStopDuration(seconds: number) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (days > 0) {
+    return `${days}d ${hours}u ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}u ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
 export default function Map({
   trackers,
   selectedTracker,
   stops = [],
   meetings = [],
+  onOpenDeviceCenter,
 }: {
   trackers: Tracker[];
   selectedTracker: Tracker;
   stops?: Stop[];
   meetings?: Meeting[];
+  onOpenDeviceCenter: (tracker: Tracker) => void;
 }) {
 
 return (
     <MapContainer
-  key={selectedTracker.name}
   center={selectedTracker.position}
   zoom={12}
   style={{ height: "500px", width: "100%" }}
 >
+  <MapFocusController position={selectedTracker.position} />
+  <style>{markerPulseStyles}</style>
       <TileLayer
         attribution="&copy; OpenStreetMap"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -183,60 +254,58 @@ position={[
       <br />
       Status: {meeting.status}
       <br />
-      Duur: {meeting.duration}s
     </Popup>
   </Marker>
 ))}
-
-{stops.map((stop, index) => (
-  <Marker
-    key={`${stop.tracker}-stop-${index}`}
-    position={stop.position}
-    icon={createStopIcon()}
-  >
-    <Popup>
-      <strong>Stop detected</strong>
-      <br />
-      Tracker: {stop.tracker}
-      <br />
-      Locatie: {stop.location}
-      <br />
-      Start: {stop.startTime}
-      <br />
-      Duur: {Math.floor(stop.duration / 60)
-  .toString()
-  .padStart(2, "0")}
-:
-{(stop.duration % 60)
-  .toString()
-  .padStart(2, "0")}
-    </Popup>
-  </Marker>
-))}
-
-{trackers
-  .filter((tracker) => tracker && tracker.position)
-  .map((tracker) => {
-    
-    const isStop = tracker.stopDetected || tracker.status === "Stop";
+{stops.map((stop, index) => {
+  const relatedTracker = trackers.find(
+    (tracker) => tracker.name === stop.tracker
+  );
 
   return (
     <Marker
-      key={tracker.name}
-      position={tracker.position}
-      icon={isStop ? createStopIcon() : createVehicleIcon(tracker.status)}
+      key={`${stop.tracker}-stop-${index}`}
+      position={stop.position}
+      icon={createStopIcon()}
     >
-                <Popup>
-            <strong>{tracker.name}</strong>
-            <br />
-            Status: {tracker.status}
-            <br />
-            Snelheid: {tracker.speed} km/u
-            <br />
-            Batterij: {tracker.battery}%
-          </Popup>
+      <Popup>
+        <strong>Stop detected</strong>
+        <br />
+        Tracker: {stop.tracker}
+        <br />
+        Locatie: {stop.location}
+        <br />
+        Start: {stop.startTime}
+        <br />
+        Batterij: {relatedTracker?.battery ?? "-"}%
+        <br />
+        Duur: {formatStopDuration(stop.duration)}
+
+        {relatedTracker && (
+          <div style={{ marginTop: "10px" }}>
+            <button
+              onClick={() => onOpenDeviceCenter(relatedTracker)}
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                background: "#1e293b",
+                color: "white",
+                fontSize: "12px",
+                fontWeight: 600,
+              }}
+            >
+              📡 Open in Device Center
+            </button>
+          </div>
+        )}
+      </Popup>
     </Marker>
   );
-})}    </MapContainer>
+})}
+
+</MapContainer>
   );
 }

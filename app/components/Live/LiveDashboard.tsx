@@ -17,6 +17,7 @@ type Props = {
   formatDuration: (seconds: number) => string;
     trackerSourceFilter: "All" | "Demo" | "Traccar";
   setTrackerSourceFilter: (value: "All" | "Demo" | "Traccar") => void;
+  onOpenDeviceCenter: (tracker: any) => void;
 };
 
 export default function LiveDashboard({
@@ -28,11 +29,16 @@ export default function LiveDashboard({
   allStops,
   meetings,
   formatDuration,
-trackerSourceFilter,
-setTrackerSourceFilter,
-}: 
-Props) {
-  return (
+  trackerSourceFilter,
+  setTrackerSourceFilter,
+  onOpenDeviceCenter,
+}: Props) {
+  console.log(
+  "LiveDashboard onOpenDeviceCenter:",
+  typeof onOpenDeviceCenter
+);
+
+    return (
     <div className="space-y-8">
       <h2 className="text-4xl font-bold">Live Tracking</h2>
 <div className="flex items-center justify-between">
@@ -57,17 +63,18 @@ Props) {
 
       <AlertsPanel alerts={alerts} />
 
-      <div className="grid grid-cols-5 gap-6">
-        <div className="col-span-3 bg-slate-900 p-6 rounded-xl border border-slate-800">
-          <h3 className="text-2xl font-semibold mb-4">Live Kaart</h3>
-
-          <MapPanel
-            trackers={trackers}
-            selectedTracker={selectedTracker}
-            stops={allStops}
-            meetings={meetings}
-            
-          />
+<div className="grid grid-cols-5 gap-6">
+  <div
+    id="live-map"
+    className="col-span-3 bg-slate-900 p-6 rounded-xl border border-slate-800"
+  >
+<MapPanel
+  trackers={trackers}
+  selectedTracker={selectedTracker}
+  stops={allStops}
+  meetings={meetings}
+  onOpenDeviceCenter={onOpenDeviceCenter}
+/>
         </div>
 
         <div className="col-span-2">

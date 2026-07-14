@@ -220,7 +220,8 @@ const [network, setNetwork] = useState<NetworkItem[]>([]);
 const [hotspots, setHotspots] = useState<Hotspot[]>([]);
 
 const [selectedTrackerName, setSelectedTrackerName] = useState("Grace");
-
+const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+const [followSelectedTracker, setFollowSelectedTracker] = useState(true);
 const [activeTab, setActiveTab] = useState<
 "live" | "analyse" | "timeline" | "trips" | "devices"
 >("live");
@@ -770,6 +771,15 @@ const visibleTrackers =
       </main>
     );
   }
+const handleOpenDeviceCenter = (tracker: Tracker) => {
+  const deviceId = String(
+    tracker.deviceId ?? tracker.name
+  );
+
+  setSelectedDeviceId(deviceId);
+  setSelectedTrackerName(tracker.name);
+  setActiveTab("devices");
+};
 
   return (
     <main className="min-h-screen bg-slate-950 text-white flex">
@@ -843,6 +853,7 @@ const visibleTrackers =
     formatDuration={formatDuration}
     trackerSourceFilter={trackerSourceFilter}
     setTrackerSourceFilter={setTrackerSourceFilter}
+onOpenDeviceCenter={handleOpenDeviceCenter}
   />
 )}
         {activeTab === "analyse" && (
@@ -1295,6 +1306,20 @@ const visibleTrackers =
       ? new Date(tracker.lastUpdate)
       : new Date(),
   }))}
+  selectedDeviceId={selectedDeviceId}
+  onSelectDevice={setSelectedDeviceId}
+onOpenOnMap={(device) => {
+  setSelectedDeviceId(device.id);
+  setSelectedTrackerName(device.name);
+  setActiveTab("live");
+
+  setTimeout(() => {
+    document.getElementById("live-map")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, 100);
+}}
 />
 )}
       </section>

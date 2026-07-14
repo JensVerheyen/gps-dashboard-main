@@ -3,6 +3,7 @@ import DeviceStatusBadge from "./DeviceStatusBadge";
 
 type DeviceDetailsProps = {
   device: Device;
+  onOpenOnMap: (device: Device) => void;
 };
 
 function DetailRow({
@@ -35,8 +36,11 @@ function SummaryItem({
   );
 }
 
-export default function DeviceDetails({ device }: DeviceDetailsProps) {
-  return (
+export default function DeviceDetails({
+  device,
+  onOpenOnMap,
+}: DeviceDetailsProps) {
+    return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -69,9 +73,12 @@ export default function DeviceDetails({ device }: DeviceDetailsProps) {
         <h3 className="font-semibold mb-3">Quick Actions</h3>
 
         <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
-          <button className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg">
-            📍 Open on Map
-          </button>
+<button
+  onClick={() => onOpenOnMap(device)}
+  className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg"
+>
+  📍 Open on Map
+</button>
           <button className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg">
             🕒 Timeline
           </button>
