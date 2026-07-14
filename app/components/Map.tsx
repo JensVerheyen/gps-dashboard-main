@@ -7,7 +7,8 @@ import {
   Popup,
   Polyline,
   Circle,
-   useMap,
+  useMap,
+  useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -155,21 +156,69 @@ const markerPulseStyles = `
   }
 `;
 function MapFocusController({
+  trackerName,
   position,
+  status,
+  follow,
 }: {
+  trackerName: string;
   position: [number, number];
+  status: string;
+  follow: boolean;
 }) {
   const map = useMap();
 
+useEffect(() => {
+  const targetZoom = Math.max(map.getZoom(), 14);
+
+  map.flyTo(position, targetZoom, {
+    animate: true,
+    duration: 0.8,
+  });
+}, [map, trackerName]);
+
   useEffect(() => {
-    map.flyTo(position, 12, {
-      animate: true,
-      duration: 0.8,
-    });
-  }, [map, position]);
+    const isMoving =
+      status === "Online" ||
+      status === "Moving" ||
+      status === "moving";
+
+    if (!follow || !isMoving) {
+      return;
+    }
+
+    const currentCenter = map.getCenter();
+    const distance = currentCenter.distanceTo(position);
+
+    if (distance > 20) {
+      map.panTo(position, {
+        animate: true,
+        duration: 0.5,
+      });
+    }
+  }, [map, position, status, follow]);
 
   return null;
 }
+
+function MapInteractionController({
+  follow,
+  onDisableFollow,
+}: {
+  follow: boolean;
+  onDisableFollow: () => void;
+}) {
+  useMapEvents({
+    dragstart: () => {
+      if (follow) {
+        onDisableFollow();
+      }
+    },
+  });
+
+  return null;
+}
+
 function formatStopDuration(seconds: number) {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -191,12 +240,16 @@ export default function Map({
   stops = [],
   meetings = [],
   onOpenDeviceCenter,
+  followSelectedTracker,
+  setFollowSelectedTracker,
 }: {
   trackers: Tracker[];
   selectedTracker: Tracker;
   stops?: Stop[];
   meetings?: Meeting[];
   onOpenDeviceCenter: (tracker: Tracker) => void;
+  followSelectedTracker: boolean;
+  setFollowSelectedTracker: (value: boolean) => void;
 }) {
 
 return (
@@ -205,7 +258,17 @@ return (
   zoom={12}
   style={{ height: "500px", width: "100%" }}
 >
-  <MapFocusController position={selectedTracker.position} />
+  <MapFocusController 
+  trackerName={selectedTracker.name}
+  position={selectedTracker.position} 
+  status={selectedTracker.status}
+  follow={followSelectedTracker}
+  />
+
+<MapInteractionController
+  follow={followSelectedTracker}
+  onDisableFollow={() => setFollowSelectedTracker(false)}
+/>
   <style>{markerPulseStyles}</style>
       <TileLayer
         attribution="&copy; OpenStreetMap"

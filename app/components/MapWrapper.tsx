@@ -41,12 +41,16 @@ export default function MapWrapper({
   stops = [],
   meetings = [],
   onOpenDeviceCenter,
+  followSelectedTracker,
+  setFollowSelectedTracker,
 }: {
-  trackers: Tracker[];
+    trackers: Tracker[];
   selectedTracker: Tracker;
   stops?: Stop[];
   meetings?: Meeting[];
   onOpenDeviceCenter: (tracker: Tracker) => void;
+   followSelectedTracker: boolean;
+   setFollowSelectedTracker: (value: boolean) => void;
 }) {
   return (
     <Map
@@ -55,6 +59,8 @@ export default function MapWrapper({
       stops={stops}
       meetings={meetings}
       onOpenDeviceCenter={onOpenDeviceCenter}
+       followSelectedTracker={followSelectedTracker}
+        setFollowSelectedTracker={setFollowSelectedTracker}
     />
   );
 }

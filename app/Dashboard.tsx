@@ -854,6 +854,8 @@ const handleOpenDeviceCenter = (tracker: Tracker) => {
     trackerSourceFilter={trackerSourceFilter}
     setTrackerSourceFilter={setTrackerSourceFilter}
 onOpenDeviceCenter={handleOpenDeviceCenter}
+followSelectedTracker={followSelectedTracker}
+setFollowSelectedTracker={setFollowSelectedTracker}
   />
 )}
         {activeTab === "analyse" && (

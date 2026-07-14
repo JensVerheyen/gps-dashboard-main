@@ -18,6 +18,8 @@ type Props = {
     trackerSourceFilter: "All" | "Demo" | "Traccar";
   setTrackerSourceFilter: (value: "All" | "Demo" | "Traccar") => void;
   onOpenDeviceCenter: (tracker: any) => void;
+  followSelectedTracker: boolean;
+setFollowSelectedTracker: (value: boolean) => void;
 };
 
 export default function LiveDashboard({
@@ -32,6 +34,8 @@ export default function LiveDashboard({
   trackerSourceFilter,
   setTrackerSourceFilter,
   onOpenDeviceCenter,
+  followSelectedTracker,
+setFollowSelectedTracker,
 }: Props) {
   console.log(
   "LiveDashboard onOpenDeviceCenter:",
@@ -63,22 +67,22 @@ export default function LiveDashboard({
 
       <AlertsPanel alerts={alerts} />
 
-<div className="grid grid-cols-5 gap-6">
-  <div
+<div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_260px] gap-4">  <div
     id="live-map"
-    className="col-span-3 bg-slate-900 p-6 rounded-xl border border-slate-800"
-  >
+className="min-w-0 bg-slate-900 p-5 rounded-xl border border-slate-800"  >
 <MapPanel
   trackers={trackers}
   selectedTracker={selectedTracker}
   stops={allStops}
   meetings={meetings}
   onOpenDeviceCenter={onOpenDeviceCenter}
+  followSelectedTracker={followSelectedTracker}
+  setFollowSelectedTracker={setFollowSelectedTracker}
 />
         </div>
 
-        <div className="col-span-2">
-          <TrackerList
+<div className="w-full xl:w-[260px]">
+            <TrackerList
             trackers={trackers}
             selectedTrackerName={selectedTrackerName}
             setSelectedTrackerName={setSelectedTrackerName}
